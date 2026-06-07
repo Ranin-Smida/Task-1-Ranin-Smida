@@ -1,206 +1,168 @@
 import customtkinter as ctk
-import random
+from tkinter import messagebox
 
-# ---------------- SETTINGS ----------------
-ctk.set_appearance_mode("dark")
-ctk.set_default_color_theme("dark-blue")
+ctk.set_appearance_mode("light")
 
-# ---------------- FONTS ----------------
-FONT_TITLE = ("Helvetica", 26, "bold")
-FONT_QUESTION = ("Helvetica", 16)
-FONT_SCORE = ("Helvetica", 14, "bold")
-FONT_RESULT = ("Helvetica", 14)
+app = ctk.CTk()
+app.title("To-Do List")
+app.geometry("500x600")
 
-# ---------------- COLORS ----------------
-BG_COLOR = "#0a192f"
-PANEL_COLOR = "#112240"
-PRIMARY_COLOR = "#64ffda"
-ACCENT_COLOR = "#64ffda"
-ERROR_COLOR = "#ff6b6b"
-TEXT_COLOR = "#ccd6f6"
+BEIGE = "#F5F5DC"
+PINK = "#FF69B4"
+LIGHT_PINK = "#FFB6C1"
+DARK_PINK = "#DB7093"
 
-# ---------------- QUESTIONS ----------------
-questions = [
-    {"question": "What is the capital of France?", "answer": ["paris"]},
-    {"question": "What planet is known as the Red Planet?", "answer": ["mars"]},
-    {"question": "Which ocean is the largest on Earth?", "answer": ["pacific", "pacific ocean"]},
-    {"question": "Who wrote 'Romeo and Juliet'?", "answer": ["william shakespeare", "shakespeare"]},
-    {"question": "What is the chemical symbol for water?", "answer": ["h2o"]},
-    {"question": "How many continents are there on Earth?", "answer": ["7", "seven"]},
-    {"question": "What gas do plants absorb from the atmosphere?", "answer": ["carbon dioxide", "co2"]},
-    {"question": "What is the largest planet in our solar system?", "answer": ["jupiter"]},
+app.configure(fg_color=BEIGE)
+
+tasks = [
+    {"task": "Do homework", "status": True},
+    {"task": "Clean room", "status": False},
+    {"task": "Go gym", "status": False}
 ]
 
-random.shuffle(questions)
+def refresh_tasks():
+    for widget in task_frame.winfo_children():
+        widget.destroy()
 
-current_question = 0
-score = 0
-
-
-def check_answer():
-    global current_question, score
-
-    user_answer = answer_entry.get().strip().lower()
-
-    if user_answer in questions[current_question]["answer"]:
-        score += 1
-        result_label.configure(
-            text="Correct! +1 point",
-            text_color=ACCENT_COLOR
+    if not tasks:
+        empty_label = ctk.CTkLabel(
+            task_frame,
+            text="No tasks yet 📭",
+            font=("Segoe Script", 16),
+            text_color=DARK_PINK
         )
-    else:
-        result_label.configure(
-            text="Incorrect!",
-            text_color=ERROR_COLOR
+        empty_label.pack(pady=20)
+        return
+
+    for index, task in enumerate(tasks):
+
+        row = ctk.CTkFrame(task_frame, fg_color=LIGHT_PINK)
+        row.pack(fill="x", pady=5, padx=5)
+
+        var = ctk.BooleanVar(value=task["status"])
+
+        def toggle_status(i=index, v=var):
+            tasks[i]["status"] = v.get()
+
+        checkbox = ctk.CTkCheckBox(
+            row,
+            text=task["task"],
+            variable=var,
+            command=toggle_status,
+            font=("Segoe Script", 16),
+            text_color="black",
+            fg_color=PINK,
+            hover_color=DARK_PINK
         )
+        checkbox.pack(side="left", padx=10, pady=10)
 
-    score_label.configure(text=f"Score: {score}/{len(questions)}")
+        delete_btn = ctk.CTkButton(
+            row,
+            text="Delete",
+            width=80,
+            fg_color=PINK,
+            hover_color=DARK_PINK,
+            text_color="white",
+            font=("Segoe Script", 12),
+            command=lambda i=index: delete_task(i)
+        )
+        delete_btn.pack(side="right", padx=10)
 
-    current_question += 1
 
-    if current_question < len(questions):
-        window.after(1000, show_question)
-    else:
-        window.after(1000, show_results)
+def add_task():
+    task_name = entry.get().strip()
+
+    if task_name == "":
+        messagebox.showerror("Error", "Task cannot be empty.")
+        return
+
+    for task in tasks:
+        if task["task"].lower() == task_name.lower():
+            messagebox.showwarning("Warning", "Task already exists.")
+            return
+
+    tasks.append({
+        "task": task_name,
+        "status": False
+    })
+
+    entry.delete(0, "end")
+    refresh_tasks()
 
 
-def show_question():
-    answer_entry.delete(0, "end")
-    result_label.configure(text="")
+def delete_task(index):
+    if 0 <= index < len(tasks):
+        tasks.pop(index)
+        refresh_tasks()
 
-    question_label.configure(
-        text=f"Question {current_question + 1}/{len(questions)}\n\n"
-             f"{questions[current_question]['question']}"
+
+def clear_all():
+    if not tasks:
+        messagebox.showinfo("Info", "Task list already empty.")
+        return
+
+    confirm = messagebox.askyesno(
+        "Confirm",
+        "Are you sure you want to delete all tasks?"
     )
 
+    if confirm:
+        tasks.clear()
+        refresh_tasks()
 
-def show_results():
-    question_label.configure(
-        text=f"🎉 Quiz Finished!\n\nFinal Score: {score}/{len(questions)}"
-    )
+# ---------------- UI ----------------
 
-    answer_entry.pack_forget()
-    button_frame.pack_forget()
-
-    result_label.configure(
-        text="Great job!",
-        text_color=ACCENT_COLOR
-    )
-
-
-def reset_quiz():
-    global current_question, score
-
-    score = 0
-    current_question = 0
-
-    random.shuffle(questions)
-
-    answer_entry.pack(pady=10)
-    button_frame.pack(pady=10)
-
-    score_label.configure(text=f"Score: {score}/{len(questions)}")
-    result_label.configure(text="", text_color=TEXT_COLOR)
-
-    show_question()
-
-
-def submit_with_enter(event):
-    check_answer()
-
-
-
-window = ctk.CTk()
-window.title("General Knowledge Quiz")
-window.geometry("700x500")
-window.configure(fg_color=BG_COLOR)
-
-
-title_label = ctk.CTkLabel(
-    window,
-    text="General Knowledge Quiz",
-    font=FONT_TITLE,
-    text_color=TEXT_COLOR
+title = ctk.CTkLabel(
+    app,
+    text=" TO-DO LIST",
+    font=("Segoe Script", 30, "bold"),
+    text_color=DARK_PINK
 )
-title_label.pack(pady=(25, 10))
+title.pack(pady=20)
 
-score_label = ctk.CTkLabel(
-    window,
-    text=f"Score: {score}/{len(questions)}",
-    font=FONT_SCORE,
-    text_color=ACCENT_COLOR
-)
-score_label.pack()
-question_frame = ctk.CTkFrame(
-    window,
-    fg_color=PANEL_COLOR,
-    corner_radius=15,
-    width=600,
-    height=180
-)
-question_frame.pack(pady=20, padx=20)
-question_frame.pack_propagate(False)
+entry_frame = ctk.CTkFrame(app, fg_color=BEIGE)
+entry_frame.pack(pady=10, padx=20, fill="x")
 
-question_label = ctk.CTkLabel(
-    question_frame,
-    text="",
-    font=FONT_QUESTION,
-    wraplength=520,
-    text_color=TEXT_COLOR,
-    justify="center"
-)
-question_label.pack(expand=True)
-
-# ---------------- ANSWER ENTRY ----------------
-answer_entry = ctk.CTkEntry(
-    window,
-    width=350,
+entry = ctk.CTkEntry(
+    entry_frame,
+    placeholder_text="Enter a new task...",
     height=40,
-    font=("Helvetica", 14),
-    placeholder_text="Type your answer here..."
+    font=("Segoe Script", 15),
+    fg_color="white",
+    border_color=PINK,
+    text_color="black"
 )
-answer_entry.pack(pady=10)
+entry.pack(side="left", padx=10, pady=10, fill="x", expand=True)
 
-answer_entry.bind("<Return>", submit_with_enter)
-
-# ---------------- BUTTONS ----------------
-button_frame = ctk.CTkFrame(
-    window,
-    fg_color="transparent"
+add_btn = ctk.CTkButton(
+    entry_frame,
+    text="Add",
+    width=100,
+    fg_color=PINK,
+    hover_color=DARK_PINK,
+    font=("Segoe Script", 14),
+    command=add_task   # ✅ FIXED
 )
-button_frame.pack(pady=15)
+add_btn.pack(side="right", padx=10)
 
-submit_button = ctk.CTkButton(
-    button_frame,
-    text="Submit Answer",
-    command=check_answer,
-    fg_color=PRIMARY_COLOR,
-    text_color="black",
-    hover_color="#4ddbc5",
-    width=150
+clear_btn = ctk.CTkButton(
+    app,
+    text="Clear All",
+    fg_color=DARK_PINK,
+    hover_color="red",
+    font=("Segoe Script", 14),
+    command=clear_all
 )
-submit_button.grid(row=0, column=0, padx=10)
+clear_btn.pack(pady=10)
 
-reset_button = ctk.CTkButton(
-    button_frame,
-    text="Reset Quiz",
-    command=reset_quiz,
-    fg_color=ERROR_COLOR,
-    hover_color="#ff5252",
-    width=150
+task_frame = ctk.CTkScrollableFrame(
+    app,
+    width=450,
+    height=350,
+    fg_color=BEIGE
 )
-reset_button.grid(row=0, column=1, padx=10)
+task_frame.pack(padx=20, pady=10, fill="both", expand=True)
 
-# ---------------- RESULT LABEL ----------------
-result_label = ctk.CTkLabel(
-    window,
-    text="",
-    font=FONT_RESULT,
-    text_color=TEXT_COLOR
-)
-result_label.pack(pady=15)
+refresh_tasks()
 
-# ---------------- START QUIZ ----------------
-show_question()
-
-window.mainloop()
+app.mainloop()
