@@ -14,11 +14,7 @@ DARK_PINK = "#DB7093"
 
 app.configure(fg_color=BEIGE)
 
-tasks = [
-    {"task": "Do homework", "status": True},
-    {"task": "Clean room", "status": False},
-    {"task": "Go gym", "status": False}
-]
+
 
 def refresh_tasks():
     for widget in task_frame.winfo_children():
