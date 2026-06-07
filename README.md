@@ -1,20 +1,39 @@
-# The General Knowledge Quiz
+# To-Do List GUI
 
-A small CLI quiz game that asks general knowledge questions, scores your answers, and shows a final summary.
+A small desktop To-Do list application built with CustomTkinter. Add, delete,
+and clear tasks with a simple, colorful UI.
 
-## How to Run
+## Requirements
+
+- Python 3.8+
+- `customtkinter` (installed via pip)
+
+## Install
+
+Create a virtual environment (recommended) and install dependencies:
+
+```bash
+python -m venv .venv
+source .venv/Scripts/activate    # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+## Run
 
 ```bash
 python main.py
 ```
 
-## How It Works
+## Features
 
-- Asks a series of questions in random order
-- Sanitizes input (trims whitespace and normalizes case)
-- Scores +1 for each correct answer
-- Prints a final score and any missed questions
+- Add new tasks with validation for empty or duplicate entries
+- Toggle task completion
+- Delete individual tasks
+- Clear all tasks with confirmation
 
-## Customize Questions
+## Files
 
-Edit the `questions` list in `main.py` to add, remove, or change prompts and answers.
+- `main.py` — application entrypoint (To-Do GUI)
+- `requirements.txt` — Python dependencies
+
+If you want this project as a separate module file, I can add `todo_gui.py` too.
