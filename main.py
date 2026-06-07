@@ -1,99 +1,206 @@
+import customtkinter as ctk
 import random
 
-def normalize_answer(text: str) -> str:
-    """Normalize user input for reliable comparisons."""
-    # Trim, case-normalize, and collapse internal whitespace to stabilize matching.
-    return " ".join(text.strip().casefold().split())
+# ---------------- SETTINGS ----------------
+ctk.set_appearance_mode("dark")
+ctk.set_default_color_theme("dark-blue")
+
+# ---------------- FONTS ----------------
+FONT_TITLE = ("Helvetica", 26, "bold")
+FONT_QUESTION = ("Helvetica", 16)
+FONT_SCORE = ("Helvetica", 14, "bold")
+FONT_RESULT = ("Helvetica", 14)
+
+# ---------------- COLORS ----------------
+BG_COLOR = "#0a192f"
+PANEL_COLOR = "#112240"
+PRIMARY_COLOR = "#64ffda"
+ACCENT_COLOR = "#64ffda"
+ERROR_COLOR = "#ff6b6b"
+TEXT_COLOR = "#ccd6f6"
+
+# ---------------- QUESTIONS ----------------
+questions = [
+    {"question": "What is the capital of France?", "answer": ["paris"]},
+    {"question": "What planet is known as the Red Planet?", "answer": ["mars"]},
+    {"question": "Which ocean is the largest on Earth?", "answer": ["pacific", "pacific ocean"]},
+    {"question": "Who wrote 'Romeo and Juliet'?", "answer": ["william shakespeare", "shakespeare"]},
+    {"question": "What is the chemical symbol for water?", "answer": ["h2o"]},
+    {"question": "How many continents are there on Earth?", "answer": ["7", "seven"]},
+    {"question": "What gas do plants absorb from the atmosphere?", "answer": ["carbon dioxide", "co2"]},
+    {"question": "What is the largest planet in our solar system?", "answer": ["jupiter"]},
+]
+
+random.shuffle(questions)
+
+current_question = 0
+score = 0
 
 
-def ask_question(prompt: str, accepted_answers: list[str]) -> bool:
-    # Loop until we get a non-blank answer to avoid accidental empty input.
-    while True:
-        raw = input(f"{prompt} ")
-        if raw.strip():
-            break
-        print("Please enter a response (not blank).")
+def check_answer():
+    global current_question, score
 
-    # Normalize once so the comparison is deterministic.
-    cleaned = normalize_answer(raw)
-    if cleaned in accepted_answers:
-        print("Correct! +1 point.\n")
-        return True
+    user_answer = answer_entry.get().strip().lower()
 
-    print("Incorrect.\n")
-    return False
+    if user_answer in questions[current_question]["answer"]:
+        score += 1
+        result_label.configure(
+            text="Correct! +1 point",
+            text_color=ACCENT_COLOR
+        )
+    else:
+        result_label.configure(
+            text="Incorrect!",
+            text_color=ERROR_COLOR
+        )
+
+    score_label.configure(text=f"Score: {score}/{len(questions)}")
+
+    current_question += 1
+
+    if current_question < len(questions):
+        window.after(1000, show_question)
+    else:
+        window.after(1000, show_results)
 
 
-def main() -> None:
-    # Central question bank; each entry defines a prompt and acceptable answers.
-    questions = [
-        {
-            "prompt": "1) What is the capital of France?",
-            "answers": ["paris"],
-        },
-        {
-            "prompt": "2) What planet is known as the Red Planet?",
-            "answers": ["mars"],
-        },
-        {
-            "prompt": "3) Which ocean is the largest on Earth?",
-            "answers": ["pacific", "pacific ocean"],
-        },
-        {
-            "prompt": "4) Who wrote 'Romeo and Juliet'?",
-            "answers": ["william shakespeare", "shakespeare"],
-        },
-        {
-            "prompt": "5) What is the chemical symbol for water?",
-            "answers": ["h2o"],
-        },
-        {
-            "prompt": "6) How many continents are there on Earth?",
-            "answers": ["7", "seven"],
-        },
-        {
-            "prompt": "7) What gas do plants absorb from the atmosphere?",
-            "answers": ["carbon dioxide", "co2"],
-        },
-        {
-            "prompt": "8) What is the largest planet in our solar system?",
-            "answers": ["jupiter"],
-        },
-    ]
+def show_question():
+    answer_entry.delete(0, "end")
+    result_label.configure(text="")
 
-    # Pre-normalize all answer keys to match the normalization pipeline.
-    for q in questions:
-        q["answers"] = [normalize_answer(a) for a in q["answers"]]
+    question_label.configure(
+        text=f"Question {current_question + 1}/{len(questions)}\n\n"
+             f"{questions[current_question]['question']}"
+    )
 
-    # Shuffle to make the quiz feel fresh each run.
+
+def show_results():
+    question_label.configure(
+        text=f"🎉 Quiz Finished!\n\nFinal Score: {score}/{len(questions)}"
+    )
+
+    answer_entry.pack_forget()
+    button_frame.pack_forget()
+
+    result_label.configure(
+        text="Great job!",
+        text_color=ACCENT_COLOR
+    )
+
+
+def reset_quiz():
+    global current_question, score
+
+    score = 0
+    current_question = 0
+
     random.shuffle(questions)
 
-    print("Welcome to The General Knowledge Quiz!\n")
-    # Score is integer state that increments on each correct answer.
-    score = 0
-    # Track missed prompts so we can recap at the end.
-    incorrect = []
+    answer_entry.pack(pady=10)
+    button_frame.pack(pady=10)
 
-    for q in questions:
-        if ask_question(q["prompt"], q["answers"]):
-            score += 1
-        else:
-            incorrect.append(q["prompt"])
+    score_label.configure(text=f"Score: {score}/{len(questions)}")
+    result_label.configure(text="", text_color=TEXT_COLOR)
 
-    # Calculate final percentage as a user-friendly summary.
-    total = len(questions)
-    percent = (score / total) * 100
-
-    print("Final Results")
-    print("-------------")
-    print(f"Score: {score}/{total} ({percent:.0f}%)")
-    if incorrect:
-        print("Missed questions:")
-        for item in incorrect:
-            print(f"- {item}")
-    else:
-        print("Perfect score! Great job!")
+    show_question()
 
 
-if __name__ == "__main__":
-    main()
+def submit_with_enter(event):
+    check_answer()
+
+
+
+window = ctk.CTk()
+window.title("General Knowledge Quiz")
+window.geometry("700x500")
+window.configure(fg_color=BG_COLOR)
+
+
+title_label = ctk.CTkLabel(
+    window,
+    text="General Knowledge Quiz",
+    font=FONT_TITLE,
+    text_color=TEXT_COLOR
+)
+title_label.pack(pady=(25, 10))
+
+score_label = ctk.CTkLabel(
+    window,
+    text=f"Score: {score}/{len(questions)}",
+    font=FONT_SCORE,
+    text_color=ACCENT_COLOR
+)
+score_label.pack()
+question_frame = ctk.CTkFrame(
+    window,
+    fg_color=PANEL_COLOR,
+    corner_radius=15,
+    width=600,
+    height=180
+)
+question_frame.pack(pady=20, padx=20)
+question_frame.pack_propagate(False)
+
+question_label = ctk.CTkLabel(
+    question_frame,
+    text="",
+    font=FONT_QUESTION,
+    wraplength=520,
+    text_color=TEXT_COLOR,
+    justify="center"
+)
+question_label.pack(expand=True)
+
+# ---------------- ANSWER ENTRY ----------------
+answer_entry = ctk.CTkEntry(
+    window,
+    width=350,
+    height=40,
+    font=("Helvetica", 14),
+    placeholder_text="Type your answer here..."
+)
+answer_entry.pack(pady=10)
+
+answer_entry.bind("<Return>", submit_with_enter)
+
+# ---------------- BUTTONS ----------------
+button_frame = ctk.CTkFrame(
+    window,
+    fg_color="transparent"
+)
+button_frame.pack(pady=15)
+
+submit_button = ctk.CTkButton(
+    button_frame,
+    text="Submit Answer",
+    command=check_answer,
+    fg_color=PRIMARY_COLOR,
+    text_color="black",
+    hover_color="#4ddbc5",
+    width=150
+)
+submit_button.grid(row=0, column=0, padx=10)
+
+reset_button = ctk.CTkButton(
+    button_frame,
+    text="Reset Quiz",
+    command=reset_quiz,
+    fg_color=ERROR_COLOR,
+    hover_color="#ff5252",
+    width=150
+)
+reset_button.grid(row=0, column=1, padx=10)
+
+# ---------------- RESULT LABEL ----------------
+result_label = ctk.CTkLabel(
+    window,
+    text="",
+    font=FONT_RESULT,
+    text_color=TEXT_COLOR
+)
+result_label.pack(pady=15)
+
+# ---------------- START QUIZ ----------------
+show_question()
+
+window.mainloop()
